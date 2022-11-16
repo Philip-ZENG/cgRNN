@@ -18,8 +18,8 @@ import tensorflow as tf
 import data_utils
 import seq2seq_model
 
-from IPython.core.debugger import Trace
-debug_here = Trace()
+from IPython.core.debugger import Tracer
+debug_here = Tracer()
 
 ## Defining parameters/flags that will be used in the model
 # Learning
@@ -79,6 +79,8 @@ train_dir = os.path.normpath(os.path.join( FLAGS.train_dir, FLAGS.action,
 
 
 summaries_dir = os.path.normpath(os.path.join( train_dir, "log_complex" )) # Directory for TB summaries
+print(">>> Training Log Directory:")
+print(summaries_dir)
 
 def compute_parameter_total(trainable_variables):
     total_parameters = 0
@@ -132,8 +134,6 @@ def create_model(session, actions, sampling=False):
 
   # Load model with previously stored checkpoints
   ckpt = tf.train.get_checkpoint_state( train_dir, latest_filename="checkpoint")
-  print(">>> Training Log Directory:")
-  print(train_dir)
 
   if ckpt and ckpt.model_checkpoint_path:
     # Check if the specific checkpoint exists
@@ -796,4 +796,4 @@ def main(_):
     train()
 
 if __name__ == "__main__":
-  tf.app.run()
+  tf.compat.v1.app.run()
