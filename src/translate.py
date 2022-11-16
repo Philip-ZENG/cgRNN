@@ -18,8 +18,8 @@ import tensorflow as tf
 import data_utils
 import seq2seq_model
 
-from IPython.core.debugger import Tracer
-debug_here = Tracer()
+from IPython.core.debugger import Pdb
+debug_here = Pdb.set_trace()
 
 ## Defining parameters/flags that will be used in the model
 # Learning
@@ -29,7 +29,7 @@ tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.95, "Learning rate is 
 tf.app.flags.DEFINE_integer("learning_rate_step", 10000, "Every this many steps, do decay.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", 16, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("iterations", int(1e5), "Iterations to train for.")
+tf.app.flags.DEFINE_integer("iterations", int(1e2), "Iterations to train for.")
 # Architecture
 tf.app.flags.DEFINE_string("architecture", "tied", "Seq2seq architecture to use: [basic, tied].")
 tf.app.flags.DEFINE_integer("size", 1024, "Size of each model layer.")
@@ -76,6 +76,7 @@ train_dir = os.path.normpath(os.path.join( FLAGS.train_dir, FLAGS.action,
   'fft_{0}'.format(FLAGS.window_size) if FLAGS.fft else 'time',
   'fft_step_{0}'.format(FLAGS.step_size) if FLAGS.fft else '',
   FLAGS.window_fun)) # if FLAGS.fft else '' TODO: replace me.
+
 
 summaries_dir = os.path.normpath(os.path.join( train_dir, "log_complex" )) # Directory for TB summaries
 
@@ -131,7 +132,8 @@ def create_model(session, actions, sampling=False):
 
   # Load model with previously stored checkpoints
   ckpt = tf.train.get_checkpoint_state( train_dir, latest_filename="checkpoint")
-  print( "train_dir", train_dir )
+  print(">>> Training Log Directory:")
+  print(train_dir)
 
   if ckpt and ckpt.model_checkpoint_path:
     # Check if the specific checkpoint exists
@@ -220,18 +222,23 @@ def train():
     print("parameter total", parameter_total)
 
 
+    # check encoder, decoder data input/output shape
+    encoder_inputs, decoder_inputs, decoder_outputs = model.get_batch( train_set, not FLAGS.omit_one_hot )
+    print("#####################Encoder input shape#####################")
+    print(encoder_inputs.shape)
+    print("#####################Decoder input shape#####################")
+    print(decoder_inputs.shape)
+    print("#####################Decoder output shape#####################")
+    print(decoder_outputs.shape)
+
+    
     for _ in range( FLAGS.iterations ):
 
       start_time = time.time()
 
       # === Training step ===
+      # Get and load 1 batch of data
       encoder_inputs, decoder_inputs, decoder_outputs = model.get_batch( train_set, not FLAGS.omit_one_hot )
-      print("#####################Encoder input shape#####################")
-      print(encoder_inputs.shape)
-      print("#####################Decoder input shape#####################")
-      print(decoder_inputs.shape)
-      print("#####################Decoder output shape#####################")
-      print(decoder_outputs.shape)
 
       # * Train for 1 iteration
       _, step_loss, loss_summary, lr_summary = model.step( sess, encoder_inputs, decoder_inputs, decoder_outputs, False )
