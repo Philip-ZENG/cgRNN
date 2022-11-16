@@ -8,7 +8,7 @@ debug_here = Tracer()
 from tensorflow.python.training import training_ops
 
 
-class RMSpropNatGrad(tf.compat.v1.train.Optimizer):
+class RMSpropNatGrad(tf.train.Optimizer):
     """ RMSProp optimizer with the capability to do natural gradient steps.
         Inspired by: https://github.com/stwisdom/urnn/blob/master/custom_optimizers.py
         See also:

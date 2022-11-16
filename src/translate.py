@@ -18,8 +18,8 @@ import tensorflow as tf
 import data_utils
 import seq2seq_model
 
-from IPython.core.debugger import Pdb
-debug_here = Pdb.set_trace()
+from IPython.core.debugger import Trace
+debug_here = Trace()
 
 ## Defining parameters/flags that will be used in the model
 # Learning
