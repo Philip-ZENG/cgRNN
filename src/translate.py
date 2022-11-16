@@ -218,7 +218,7 @@ def train():
 
     step_time, loss = 0, 0
 
-    parameter_total = compute_parameter_total(tf.trainable_variables())
+    parameter_total = compute_parameter_total(tf.compat.v1.trainable_variables())
     print("parameter total", parameter_total)
 
 
