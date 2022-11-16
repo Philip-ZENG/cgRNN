@@ -129,7 +129,7 @@ def create_model(session, actions, sampling=False):
   # Initialize model parameters
   if FLAGS.load <= 0:
     print("Creating model with fresh parameters.")
-    session.run(tf.global_variables_initializer())
+    session.run(tf.compat.v1.global_variables_initializer())
     return model
 
   # Load model with previously stored checkpoints
@@ -194,10 +194,10 @@ def train():
   # gpu_options = tf.GPUOptions(visible_device_list=str(FLAGS.GPU),
   #                             per_process_gpu_memory_fraction=0.9,
   #                             allow_growth=True)
-  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+  gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.5)
 
   # with tf.Session(config=tf.ConfigProto( gpu_options=gpu_options)) as sess:
-  with tf.Session(config=tf.ConfigProto( gpu_options=gpu_options)) as sess:
+  with tf.compat.v1.Session(config=tf.compat.v1.ConfigProto( gpu_options=gpu_options)) as sess:
 
     # === Create the model ===
     print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))

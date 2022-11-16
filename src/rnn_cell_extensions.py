@@ -96,12 +96,12 @@ class LinearSpaceDecoderWrapper(RNNCell):
       # Fine if not multi-rnn
       insize = self._cell.state_size
 
-    self.w_out = tf.get_variable("proj_w_out",
+    self.w_out = tf.compat.v1.get_variable("proj_w_out",
         [insize, output_size],
         dtype=tf.float32,
         initializer=tf.random_uniform_initializer(minval=-0.04, maxval=0.04))
 
-    self.b_out = tf.get_variable("proj_b_out", [output_size],
+    self.b_out = tf.compat.v1.get_variable("proj_b_out", [output_size],
         dtype=tf.float32,
         initializer=tf.random_uniform_initializer(minval=-0.04, maxval=0.04))
 
@@ -131,11 +131,11 @@ def mod_sigmoid(z, scope='', reuse=None):
     """
     ModSigmoid implementation, using a coupled alpha and beta.
     """
-    with tf.variable_scope('mod_sigmoid_' + scope, reuse=reuse):
-        alpha = tf.get_variable('alpha', [], dtype=tf.float32,
+    with tf.compat.v1.variable_scope('mod_sigmoid_' + scope, reuse=reuse):
+        alpha = tf.compat.v1.get_variable('alpha', [], dtype=tf.float32,
                                 initializer=tf.constant_initializer(0.0))
         alpha_norm = tf.nn.sigmoid(alpha)
-        pre_act = alpha_norm * tf.real(z) + (1 - alpha_norm)*tf.imag(z)
+        pre_act = alpha_norm * tf.math.real(z) + (1 - alpha_norm)*tf.math.imag(z)
         return tf.complex(tf.nn.sigmoid(pre_act), tf.zeros_like(pre_act))
 
 
@@ -143,14 +143,14 @@ def mod_sigmoid_beta(z, scope='', reuse=None):
     """
     ModSigmoid implementation, with uncoupled alpha and beta.
     """
-    with tf.variable_scope('mod_sigmoid_beta_' + scope, reuse=reuse):
-        alpha = tf.get_variable('alpha', [], dtype=tf.float32,
+    with tf.compat.v1.variable_scope('mod_sigmoid_beta_' + scope, reuse=reuse):
+        alpha = tf.compat.v1.get_variable('alpha', [], dtype=tf.float32,
                                 initializer=tf.constant_initializer(0.0))
-        beta = tf.get_variable('beta', [], dtype=tf.float32,
+        beta = tf.compat.v1.get_variable('beta', [], dtype=tf.float32,
                                initializer=tf.constant_initializer(1.0))
         alpha_norm = tf.nn.sigmoid(alpha)
         beta_norm = tf.nn.sigmoid(beta)
-        pre_act = alpha_norm * tf.real(z) + beta_norm*tf.imag(z)
+        pre_act = alpha_norm * tf.math.real(z) + beta_norm*tf.math.imag(z)
         return tf.complex(tf.nn.sigmoid(pre_act), tf.zeros_like(pre_act))
 
 
@@ -158,8 +158,8 @@ def mod_sigmoid_prod(z, scope='', reuse=None):
     """
     ModSigmoid implementation.
     """
-    with tf.variable_scope('mod_sigmoid_prod_' + scope, reuse=reuse):
-        prod = tf.nn.sigmoid(tf.real(z)) * tf.nn.sigmoid(tf.imag(z))
+    with tf.compat.v1.variable_scope('mod_sigmoid_prod_' + scope, reuse=reuse):
+        prod = tf.nn.sigmoid(tf.math.real(z)) * tf.nn.sigmoid(tf.math.imag(z))
         return tf.complex(prod, tf.zeros_like(prod))
 
 
@@ -176,13 +176,13 @@ def mod_relu(z, scope='', reuse=None):
     Returns:
         z_out: complex output.
     """
-    with tf.variable_scope('mod_relu' + scope, reuse=reuse):
-        b = tf.get_variable('b', [], dtype=tf.float32,
+    with tf.compat.v1.variable_scope('mod_relu' + scope, reuse=reuse):
+        b = tf.compat.v1.get_variable('b', [], dtype=tf.float32,
                             initializer=urnd_init(-0.01, 0.01))
-        modulus = tf.sqrt(tf.real(z)**2 + tf.imag(z)**2)
+        modulus = tf.sqrt(tf.math.real(z)**2 + tf.math.imag(z)**2)
         rescale = tf.nn.relu(modulus + b) / (modulus + 1e-6)
-        # return tf.complex(rescale * tf.real(z),
-        #                   rescale * tf.imag(z))
+        # return tf.complex(rescale * tf.math.real(z),
+        #                   rescale * tf.math.imag(z))
         rescale = tf.complex(rescale, tf.zeros_like(rescale))
         return tf.multiply(rescale, z)
 
@@ -244,33 +244,33 @@ def complex_matmul(x, num_proj, scope, reuse, bias=False, bias_init_r=0.0,
     """
     in_shape = tf.Tensor.get_shape(x).as_list()
     # debug_here()
-    with tf.variable_scope(scope, reuse=reuse):
+    with tf.compat.v1.variable_scope(scope, reuse=reuse):
         if unitary:
-            with tf.variable_scope('unitary_stiefel', reuse=reuse):
-                varU = tf.get_variable('gate_U',
+            with tf.compat.v1.variable_scope('unitary_stiefel', reuse=reuse):
+                varU = tf.compat.v1.get_variable('gate_U',
                                        shape=in_shape[-1:] + [num_proj] + [2],
                                        dtype=tf.float32,
                                        initializer=unitary_init)
                 A = tf.complex(varU[:, :, 0], varU[:, :, 1])
         elif orthogonal:
-            with tf.variable_scope('orthogonal_stiefel', reuse=reuse):
-                Ar = tf.get_variable('gate_Ur', in_shape[-1:] + [num_proj],
+            with tf.compat.v1.variable_scope('orthogonal_stiefel', reuse=reuse):
+                Ar = tf.compat.v1.get_variable('gate_Ur', in_shape[-1:] + [num_proj],
                                      dtype=tf.float32,
                                      initializer=tf.orthogonal_initializer())
-                Ai = tf.get_variable('gate_Ui', in_shape[-1:] + [num_proj],
+                Ai = tf.compat.v1.get_variable('gate_Ui', in_shape[-1:] + [num_proj],
                                      dtype=tf.float32,
                                      initializer=tf.orthogonal_initializer())
                 A = tf.complex(Ar, Ai)
         else:
-            varU = tf.get_variable('gate_A',
+            varU = tf.compat.v1.get_variable('gate_A',
                                    shape=in_shape[-1:] + [num_proj] + [2],
                                    dtype=tf.float32,
                                    initializer=tf.glorot_uniform_initializer())
             A = tf.complex(varU[:, :, 0], varU[:, :, 1])
         if bias:
-            varbr = tf.get_variable('bias_r', [num_proj], dtype=tf.float32,
+            varbr = tf.compat.v1.get_variable('bias_r', [num_proj], dtype=tf.float32,
                                     initializer=tf.constant_initializer(bias_init_r))
-            varbc = tf.get_variable('bias_c', [num_proj], dtype=tf.float32,
+            varbc = tf.compat.v1.get_variable('bias_c', [num_proj], dtype=tf.float32,
                                     initializer=tf.constant_initializer(bias_init_c))
             b = tf.complex(varbr, varbc)
             return tf.matmul(x, A) + b
@@ -284,26 +284,26 @@ def matmul_plus_bias(x, num_proj, scope, reuse, bias_init=0.0, orthogonal=False)
     Returns: Ax + b
     """
     in_shape = tf.Tensor.get_shape(x).as_list()
-    with tf.variable_scope(scope, reuse=reuse):
+    with tf.compat.v1.variable_scope(scope, reuse=reuse):
         if orthogonal:
-            with tf.variable_scope('orthogonal_stiefel', reuse=reuse):
-                A = tf.get_variable('gate_O', [in_shape[-1], num_proj],
+            with tf.compat.v1.variable_scope('orthogonal_stiefel', reuse=reuse):
+                A = tf.compat.v1.get_variable('gate_O', [in_shape[-1], num_proj],
                                     dtype=tf.float32,
                                     initializer=tf.orthogonal_initializer())
         else:
-            A = tf.get_variable('A', [in_shape[-1], num_proj], dtype=tf.float32,
+            A = tf.compat.v1.get_variable('A', [in_shape[-1], num_proj], dtype=tf.float32,
                                 initializer=tf.glorot_uniform_initializer())
-        b = tf.get_variable('bias', [num_proj], dtype=tf.float32,
+        b = tf.compat.v1.get_variable('bias', [num_proj], dtype=tf.float32,
                             initializer=tf.constant_initializer(bias_init))
         print('Initializing', tf.contrib.framework.get_name_scope(), 'bias to',
               bias_init)
-    with tf.variable_scope('linear_layer'):
+    with tf.compat.v1.variable_scope('linear_layer'):
         return tf.matmul(x, A) + b
 
 
 def C_to_R(h, num_proj, reuse, scope=None, bias_init=0.0):
-    with tf.variable_scope(scope or "C_to_R"):
-        concat = tf.concat([tf.real(h), tf.imag(h)], axis=-1)
+    with tf.compat.v1.variable_scope(scope or "C_to_R"):
+        concat = tf.concat([tf.math.real(h), tf.math.imag(h)], axis=-1)
         return matmul_plus_bias(concat, num_proj, 'final', reuse, bias_init)
 
 
@@ -390,7 +390,7 @@ class ComplexGatedRecurrentUnit(RNNCell):
         """
         New unified gate, idea use real and imaginary outputs as gating scalars.
         """
-        with tf.variable_scope(scope, self._reuse):
+        with tf.compat.v1.variable_scope(scope, self._reuse):
             gh = complex_matmul(h, int(self._num_units/2.0), scope='gh', reuse=self._reuse,
                                 unitary=unitary, orthogonal=orthogonal)
             gx = complex_matmul(x, int(self._num_units/2.0), scope='gx', reuse=self._reuse,
@@ -402,8 +402,8 @@ class ComplexGatedRecurrentUnit(RNNCell):
                 z = mod_sigmoid_beta(g, scope='z')
                 return r, z
             else:
-                r = tf.nn.sigmoid(tf.real(g))
-                z = tf.nn.sigmoid(tf.imag(g))
+                r = tf.nn.sigmoid(tf.math.real(g))
+                z = tf.nn.sigmoid(tf.math.imag(g))
                 return (tf.complex(r, tf.zeros_like(r), name='r'),
                         tf.complex(z, tf.zeros_like(z), name='z'))
 
@@ -411,7 +411,7 @@ class ComplexGatedRecurrentUnit(RNNCell):
         """
         Complex GRU gates, the idea is that gates should make use of phase information.
         """
-        with tf.variable_scope(scope, self._reuse):
+        with tf.compat.v1.variable_scope(scope, self._reuse):
             ghr = complex_matmul(h, int(self._num_units/2.0), scope='ghr', reuse=self._reuse)
             gxr = complex_matmul(x, int(self._num_units/2.0), scope='gxr', reuse=self._reuse,
                                  bias=True, bias_init_c=bias_init, bias_init_r=bias_init)
@@ -425,7 +425,7 @@ class ComplexGatedRecurrentUnit(RNNCell):
             return r, z
 
     def __call__(self, inputs, state, scope=None):
-        with tf.variable_scope("ComplexGatedRecurrentUnit", reuse=self._reuse):
+        with tf.compat.v1.variable_scope("ComplexGatedRecurrentUnit", reuse=self._reuse):
             _, last_h_real = state
 
             #assemble complex state
@@ -456,35 +456,35 @@ class ComplexGatedRecurrentUnit(RNNCell):
                 r, z = self.double_memory_gate(last_h, cin, 'double_memory_gate',
                                                bias_init=4.0)
 
-            with tf.variable_scope("canditate_h"):
+            with tf.compat.v1.variable_scope("canditate_h"):
                 in_shape = tf.Tensor.get_shape(cin).as_list()[-1]
-                var_Wx = tf.get_variable("Wx", [in_shape, int(self._num_units/2.0), 2],
+                var_Wx = tf.compat.v1.get_variable("Wx", [in_shape, int(self._num_units/2.0), 2],
                                          dtype=tf.float32,
                                          initializer=tf.glorot_uniform_initializer())
                 if self._stateU:
-                    with tf.variable_scope("unitary_stiefel", reuse=self._reuse):
-                        varU = tf.get_variable("recurrent_U",
+                    with tf.compat.v1.variable_scope("unitary_stiefel", reuse=self._reuse):
+                        varU = tf.compat.v1.get_variable("recurrent_U",
                                                shape=[int(self._num_units/2.0),
                                                       int(self._num_units/2.0), 2],
                                                dtype=tf.float32,
                                                initializer=arjovski_init)
                         U = tf.complex(varU[:, :, 0], varU[:, :, 1])
                 else:
-                    varU = tf.get_variable("recurrent_U",
+                    varU = tf.compat.v1.get_variable("recurrent_U",
                                            shape=[int(self._num_units/2.0), 
                                                   int(self._num_units/2.0), 2],
                                            dtype=tf.float32,
                                            initializer=arjovski_init)
                     U = tf.complex(varU[:, :, 0], varU[:, :, 1])
 
-                var_bias = tf.get_variable("b", [int(self._num_units/2.0), 2], dtype=tf.float32,
+                var_bias = tf.compat.v1.get_variable("b", [int(self._num_units/2.0), 2], dtype=tf.float32,
                                            initializer=tf.zeros_initializer())
                 Wx = tf.complex(var_Wx[:, :, 0], var_Wx[:, :, 1])
                 bias = tf.complex(var_bias[:, 0], var_bias[:, 1])
                 tmp = tf.matmul(cin, Wx) + tf.matmul(tf.multiply(r, last_h), U) + bias
                 h_bar = self._activation(tmp)
             new_h = (1 - z)*last_h + z*h_bar
-            new_h_real = tf.concat([tf.real(new_h), tf.imag(new_h)], -1)
+            new_h_real = tf.concat([tf.math.real(new_h), tf.math.imag(new_h)], -1)
 
             if self._num_proj is None:
                 output = new_h_real
@@ -493,7 +493,7 @@ class ComplexGatedRecurrentUnit(RNNCell):
                     output = complex_matmul(new_h, self._num_proj, scope='C_to_C_out',
                                             reuse=self._reuse)
                     #disassemble complex state.
-                    # output = tf.concat([tf.real(output), tf.imag(output)], -1)
+                    # output = tf.concat([tf.math.real(output), tf.math.imag(output)], -1)
                 else:
                     output = C_to_R(new_h, self._num_proj, reuse=self._reuse)
 
